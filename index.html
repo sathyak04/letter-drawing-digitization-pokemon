@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Who's That Pokémon?</title>
+<style>
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+    font-family: 'pixel', sans-serif;
+    text-align: center;
+}
+
+@font-face {
+    font-family: 'pixel';
+    src: url('pixel.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+h1 {
+    font-size: 55px;
+    margin-bottom: 0px;
+}
+
+h2 {
+    margin-bottom: 0px;
+}
+
+p {
+    margin-top: 0px;
+    margin-bottom: 5px;
+    color: red;
+}
+
+.canvas-container {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+canvas {
+    border: 4px solid black;
+    background-color: white;
+}
+
+.button-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+button {
+    padding: 10px 15px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    background-color: #f2f2f2;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #ddd;
+}
+
+/* Pokeball lives container */
+.lives-container {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+.lives-container img {
+    width: 40px;
+    height: 40px;
+}
+
+#lives-label {
+    font-weight: bold;
+    font-family: 'pixel', sans-serif;
+    font-size: 40px;
+    margin-right: 10px;
+}
+
+/* New displays */
+#guesses {
+    font-size: 32px;
+    letter-spacing: 10px;
+    margin-bottom: 5px;
+}
+
+#guessed-letters {
+    font-size: 22px;
+    margin-bottom: 5px;
+}
+
+#game-message {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+</style>
+</head>
+<body>
+<h1>WHO'S THAT POKÉMON?</h1>
+<h2>INSTRUCTIONS: </h2>
+<p>1. USE CANVAS BELOW TO DRAW A LETTER FOR YOUR GUESS</p>
+<p>2. WHEN FINISHED PRESS PREDICT LETTER</p>
+<p>3. YOU WILL SEE A PREDICTION OF YOUR LETTER, PRESS CONFIRM LETTER IF IT IS CORRECT</p>
+<p>4. OTHERWISE PRESS CLEAR FOR AN EMPTY CANVAS</p>
+<p>5. USE CAPITAL AND LOWERCASE LETTERS IF ONE OR THE OTHER ISN'T WORKING</p>
+<p>6. WIN OR LOSE, OR IF NEEDED FOR ANY OTHER REASON, RESET GAME OPTION IS AVAILABLE</p>
+
+<div class="canvas-container">
+    <canvas id="canvas" width="280" height="280"></canvas>
+    <img id="reference-image" src="charmander.png" width="280" height="280" alt="Reference Image">
+</div>
+
+<!-- Lives -->
+<div class="lives-container" id="lives-container">
+    <span id="lives-label">LIVES:</span>
+</div>
+
+<div class="button-container">
+    <button id="clear">Clear</button>
+    <button id="predict">Predict Letter</button>
+    <button id="confirm" style="display:none;">Confirm Letter</button>
+    <button id="reset">Reset Game</button>
+</div>
+
+<p id="prediction"></p>
+
+<!-- New sections -->
+<div id="guesses"></div>
+<div id="guessed-letters"></div>
+<div id="game-message"></div>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+let drawing = false;
+
+ctx.lineWidth = 20;
+ctx.lineCap = "round";
+ctx.strokeStyle = "black";
+ctx.fillStyle = "white";
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+canvas.addEventListener("mousedown", e => { 
+    drawing = true; 
+    const rect = canvas.getBoundingClientRect(); 
+    ctx.beginPath(); 
+    ctx.moveTo(e.clientX-rect.left, e.clientY-rect.top); 
+});
+canvas.addEventListener("mousemove", e => { 
+    if (!drawing) return; 
+    const rect = canvas.getBoundingClientRect(); 
+    ctx.lineTo(e.clientX-rect.left, e.clientY-rect.top); 
+    ctx.stroke(); 
+});
+canvas.addEventListener("mouseup", () => drawing = false);
+canvas.addEventListener("mouseleave", () => drawing = false);
+
+const clearBtn = document.getElementById("clear");
+const predictBtn = document.getElementById("predict");
+const confirmBtn = document.getElementById("confirm");
+const resetBtn = document.getElementById("reset");
+let lastPredictedLetter = "";
+
+// Clear canvas
+clearBtn.addEventListener("click", () => {
+    ctx.clearRect(0,0,canvas.width,canvas.height); 
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+});
+
+// Update lives display
+function updateLives(attemptsLeft, maxAttempts) {
+    const container = document.getElementById("lives-container");
+    const label = document.getElementById("lives-label");
+    container.innerHTML = '';
+    container.appendChild(label);
+    for (let i = 0; i < maxAttempts; i++) {
+        const img = document.createElement("img");
+        img.src = "pokeball.png";
+        img.style.filter = i < attemptsLeft ? "none" : "grayscale(100%)";
+        container.appendChild(img);
+    }
+}
+
+// Update guesses display (uppercase)
+function updateGuesses(word) {
+    document.getElementById("guesses").textContent = word.toUpperCase().split("").join(" ");
+}
+
+// Update guessed letters display (uppercase, red)
+function updateGuessedLetters(letters) {
+    const guessedDiv = document.getElementById("guessed-letters");
+    guessedDiv.innerHTML = "GUESSED LETTERS: <span style='color:red'>" + letters.map(l => l.toUpperCase()).join(", ") + "</span>";
+}
+
+// Update game message
+function updateGameMessage(status, repeated=false) {
+    const msgDiv = document.getElementById("game-message");
+    if (status === "won") {
+        msgDiv.textContent = "You Won!";
+        msgDiv.style.color = "green";
+    } else if (status === "lost") {
+        msgDiv.textContent = "You Lose!";
+        msgDiv.style.color = "red";
+    } else if (repeated) {
+        msgDiv.textContent = "You already guessed that letter!";
+        msgDiv.style.color = "orange";
+    } else {
+        msgDiv.textContent = "";
+    }
+}
+
+// Update Pokémon image
+function updatePokemonImage(pokemonName) {
+    const referenceImage = document.getElementById("reference-image");
+    referenceImage.src = "pokemon/" + pokemonName + ".png"; // <- changed path to pokemon folder
+}
+
+
+// Initial setup: fetch game state on load
+async function initGame() {
+    const response = await fetch("http://127.0.0.1:5000/reset", {method:"POST"});
+    const data = await response.json();
+
+    updateLives(data.game_state.attempts_left, 5);
+    updateGuesses(data.game_state.word);
+    updateGuessedLetters(data.game_state.guessed_letters);
+    updateGameMessage(data.game_state.status);
+    updatePokemonImage(data.game_state.current_pokemon);
+}
+initGame();
+
+// Reset button
+resetBtn.addEventListener("click", async () => {
+    const response = await fetch("http://127.0.0.1:5000/reset", {method:"POST"});
+    const data = await response.json();
+
+    document.getElementById("prediction").textContent = "";
+    confirmBtn.style.display = "none";
+
+    updateLives(data.game_state.attempts_left, 5);
+    updateGuesses(data.game_state.word);
+    updateGuessedLetters(data.game_state.guessed_letters);
+    updateGameMessage(data.game_state.status);
+    updatePokemonImage(data.game_state.current_pokemon);
+});
+
+// Predict button
+predictBtn.addEventListener("click", async () => {
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = 28;
+    tempCanvas.height = 28;
+    tempCanvas.getContext("2d").drawImage(canvas,0,0,28,28);
+    const dataUrl = tempCanvas.toDataURL("image/png");
+
+    const response = await fetch("http://127.0.0.1:5000/predict", {
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({image:dataUrl})
+    });
+
+    const data = await response.json();
+    lastPredictedLetter = data.prediction;
+    document.getElementById("prediction").textContent = "PREDICTED LETTER: " + lastPredictedLetter;
+
+    updateLives(data.game_state.attempts_left,5);
+    updateGuesses(data.game_state.word);
+    updateGuessedLetters(data.game_state.guessed_letters);
+    updateGameMessage(data.game_state.status, data.game_state.repeated_guess);
+    updatePokemonImage(data.game_state.current_pokemon);
+
+    confirmBtn.style.display = "inline-block";
+});
+
+// Confirm button
+confirmBtn.addEventListener("click", async () => {
+    const response = await fetch("http://127.0.0.1:5000/confirm", {
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({letter:lastPredictedLetter})
+    });
+
+    const data = await response.json();
+
+    updateLives(data.game_state.attempts_left,5);
+    updateGuesses(data.game_state.word);
+    updateGuessedLetters(data.game_state.guessed_letters);
+    updateGameMessage(data.game_state.status, data.game_state.repeated_guess);
+    updatePokemonImage(data.game_state.current_pokemon);
+
+    confirmBtn.style.display = "none";
+    document.getElementById("prediction").textContent = "";
+});
+</script>
+</body>
+</html>
