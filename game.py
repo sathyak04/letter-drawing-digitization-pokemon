@@ -8,7 +8,7 @@ from pathlib import Path
 class HangmanGame:
     def __init__(self, word_list=None, max_attempts=5):
         if word_list is None:
-            folder_path = Path('pokemon')
+            folder_path = Path('static/pokemon')
             self.word_list = [file.stem for file in folder_path.glob('*.png')]
         else:
             self.word_list = word_list

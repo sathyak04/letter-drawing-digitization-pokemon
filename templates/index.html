@@ -17,25 +17,14 @@ body {
 
 @font-face {
     font-family: 'pixel';
-    src: url('pixel.ttf') format('truetype');
+    src: url("{{ url_for('static', filename='pixel.ttf') }}") format('truetype');
     font-weight: normal;
     font-style: normal;
 }
 
-h1 {
-    font-size: 55px;
-    margin-bottom: 0px;
-}
-
-h2 {
-    margin-bottom: 0px;
-}
-
-p {
-    margin-top: 0px;
-    margin-bottom: 5px;
-    color: red;
-}
+h1 { font-size: 55px; margin-bottom: 0px; }
+h2 { margin-bottom: 0px; }
+p { margin-top: 0px; margin-bottom: 5px; color: red; }
 
 .canvas-container {
     display: flex;
@@ -46,10 +35,7 @@ p {
     margin-bottom: 15px;
 }
 
-canvas {
-    border: 4px solid black;
-    background-color: white;
-}
+canvas { border: 4px solid black; background-color: white; }
 
 .button-container {
     display: flex;
@@ -66,11 +52,8 @@ button {
     cursor: pointer;
 }
 
-button:hover {
-    background-color: #ddd;
-}
+button:hover { background-color: #ddd; }
 
-/* Pokeball lives container */
 .lives-container {
     display: flex;
     justify-content: center;
@@ -90,28 +73,14 @@ button:hover {
     margin-right: 10px;
 }
 
-/* New displays */
-#guesses {
-    font-size: 32px;
-    letter-spacing: 10px;
-    margin-bottom: 5px;
-}
-
-#guessed-letters {
-    font-size: 22px;
-    margin-bottom: 5px;
-}
-
-#game-message {
-    font-size: 28px;
-    font-weight: bold;
-    margin-bottom: 10px;
-}
+#guesses { font-size: 32px; letter-spacing: 10px; margin-bottom: 5px; }
+#guessed-letters { font-size: 22px; margin-bottom: 5px; }
+#game-message { font-size: 28px; font-weight: bold; margin-bottom: 10px; }
 </style>
 </head>
 <body>
 <h1>WHO'S THAT POKÉMON?</h1>
-<h2>INSTRUCTIONS: </h2>
+<h2>INSTRUCTIONS:</h2>
 <p>1. USE CANVAS BELOW TO DRAW A LETTER FOR YOUR GUESS</p>
 <p>2. WHEN FINISHED PRESS PREDICT LETTER</p>
 <p>3. YOU WILL SEE A PREDICTION OF YOUR LETTER, PRESS CONFIRM LETTER IF IT IS CORRECT</p>
@@ -121,10 +90,9 @@ button:hover {
 
 <div class="canvas-container">
     <canvas id="canvas" width="280" height="280"></canvas>
-    <img id="reference-image" src="charmander.png" width="280" height="280" alt="Reference Image">
+    <img id="reference-image" src="{{ url_for('static', filename='pokemon/charmander.png') }}" width="280" height="280" alt="Reference Image">
 </div>
 
-<!-- Lives -->
 <div class="lives-container" id="lives-container">
     <span id="lives-label">LIVES:</span>
 </div>
@@ -137,8 +105,6 @@ button:hover {
 </div>
 
 <p id="prediction"></p>
-
-<!-- New sections -->
 <div id="guesses"></div>
 <div id="guessed-letters"></div>
 <div id="game-message"></div>
@@ -175,13 +141,11 @@ const confirmBtn = document.getElementById("confirm");
 const resetBtn = document.getElementById("reset");
 let lastPredictedLetter = "";
 
-// Clear canvas
 clearBtn.addEventListener("click", () => {
     ctx.clearRect(0,0,canvas.width,canvas.height); 
     ctx.fillRect(0,0,canvas.width,canvas.height);
 });
 
-// Update lives display
 function updateLives(attemptsLeft, maxAttempts) {
     const container = document.getElementById("lives-container");
     const label = document.getElementById("lives-label");
@@ -189,24 +153,21 @@ function updateLives(attemptsLeft, maxAttempts) {
     container.appendChild(label);
     for (let i = 0; i < maxAttempts; i++) {
         const img = document.createElement("img");
-        img.src = "pokeball.png";
+        img.src = "{{ url_for('static', filename='pokeball.png') }}";
         img.style.filter = i < attemptsLeft ? "none" : "grayscale(100%)";
         container.appendChild(img);
     }
 }
 
-// Update guesses display (uppercase)
 function updateGuesses(word) {
     document.getElementById("guesses").textContent = word.toUpperCase().split("").join(" ");
 }
 
-// Update guessed letters display (uppercase, red)
 function updateGuessedLetters(letters) {
     const guessedDiv = document.getElementById("guessed-letters");
     guessedDiv.innerHTML = "GUESSED LETTERS: <span style='color:red'>" + letters.map(l => l.toUpperCase()).join(", ") + "</span>";
 }
 
-// Update game message
 function updateGameMessage(status, repeated=false) {
     const msgDiv = document.getElementById("game-message");
     if (status === "won") {
@@ -223,16 +184,14 @@ function updateGameMessage(status, repeated=false) {
     }
 }
 
-// Update Pokémon image
 function updatePokemonImage(pokemonName) {
     const referenceImage = document.getElementById("reference-image");
-    referenceImage.src = "pokemon/" + pokemonName + ".png"; // <- changed path to pokemon folder
+    referenceImage.src = "{{ url_for('static', filename='pokemon/') }}" + pokemonName + ".png";
 }
 
-
-// Initial setup: fetch game state on load
+// Fetch game state on load
 async function initGame() {
-    const response = await fetch("http://127.0.0.1:5000/reset", {method:"POST"});
+    const response = await fetch("/reset", {method:"POST"});
     const data = await response.json();
 
     updateLives(data.game_state.attempts_left, 5);
@@ -245,7 +204,7 @@ initGame();
 
 // Reset button
 resetBtn.addEventListener("click", async () => {
-    const response = await fetch("http://127.0.0.1:5000/reset", {method:"POST"});
+    const response = await fetch("/reset", {method:"POST"});
     const data = await response.json();
 
     document.getElementById("prediction").textContent = "";
@@ -266,7 +225,7 @@ predictBtn.addEventListener("click", async () => {
     tempCanvas.getContext("2d").drawImage(canvas,0,0,28,28);
     const dataUrl = tempCanvas.toDataURL("image/png");
 
-    const response = await fetch("http://127.0.0.1:5000/predict", {
+    const response = await fetch("/predict", {
         method:"POST",
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify({image:dataUrl})
@@ -287,7 +246,7 @@ predictBtn.addEventListener("click", async () => {
 
 // Confirm button
 confirmBtn.addEventListener("click", async () => {
-    const response = await fetch("http://127.0.0.1:5000/confirm", {
+    const response = await fetch("/confirm", {
         method:"POST",
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify({letter:lastPredictedLetter})
