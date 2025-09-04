@@ -1,14 +1,14 @@
 import base64
 import io
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from PIL import Image
 import numpy as np
 from tensorflow.keras.models import load_model
 from game import HangmanGame
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", template_folder="templates")
 CORS(app)
 
 # Load EMNIST model
@@ -22,6 +22,11 @@ def add_lives_info(state):
     state["lives"] = state["attempts_left"]
     state["max_lives"] = game.max_attempts
     return state
+
+# ✅ Added route for root so it serves index.html
+@app.route("/")
+def index():
+    return render_template("index.html")
 
 @app.route("/predict", methods=["POST"])
 def predict():
