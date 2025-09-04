@@ -110,6 +110,9 @@ button:hover { background-color: #ddd; }
 <div id="game-message"></div>
 
 <script>
+// Base static path for deployed server
+const STATIC_URL = "{{ url_for('static', filename='') }}";
+
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 let drawing = false;
@@ -153,7 +156,7 @@ function updateLives(attemptsLeft, maxAttempts) {
     container.appendChild(label);
     for (let i = 0; i < maxAttempts; i++) {
         const img = document.createElement("img");
-        img.src = "{{ url_for('static', filename='pokeball.png') }}";
+        img.src = STATIC_URL + "pokeball.png";
         img.style.filter = i < attemptsLeft ? "none" : "grayscale(100%)";
         container.appendChild(img);
     }
@@ -186,7 +189,7 @@ function updateGameMessage(status, repeated=false) {
 
 function updatePokemonImage(pokemonName) {
     const referenceImage = document.getElementById("reference-image");
-    referenceImage.src = "{{ url_for('static', filename='pokemon/') }}" + pokemonName + ".png";
+    referenceImage.src = STATIC_URL + "pokemon/" + pokemonName + ".png";
 }
 
 // Fetch game state on load
@@ -237,7 +240,6 @@ predictBtn.addEventListener("click", async () => {
 
     updateLives(data.game_state.attempts_left,5);
     updateGuesses(data.game_state.word);
-    updateGuessedLetters(data.game_state.guessed_letters);
     updateGameMessage(data.game_state.status, data.game_state.repeated_guess);
     updatePokemonImage(data.game_state.current_pokemon);
 
