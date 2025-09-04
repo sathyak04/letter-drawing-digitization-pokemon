@@ -1,8 +1,7 @@
 services:
   - type: web
-    name: pokemon-digitization
+    name: pokemon-app
     env: python
-    plan: free
-    pythonVersion: 3.12
-    buildCommand: pip install -r requirements.txt
-    startCommand: python app.py
+    pythonVersion: "3.12"
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python app.py"
