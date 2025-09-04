@@ -5,13 +5,23 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from PIL import Image
 import numpy as np
+import tensorflow as tf
 from tensorflow.keras.models import load_model
 from game import HangmanGame
+
+# ------------------- TensorFlow tweaks -------------------
+# Limit GPU/CPU memory growth to prevent worker timeout
+physical_devices = tf.config.list_physical_devices('GPU')
+for device in physical_devices:
+    tf.config.experimental.set_memory_growth(device, True)
+
+tf.get_logger().setLevel('ERROR')  # Reduce TF logging overhead
+# ----------------------------------------------------------
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
 CORS(app)
 
-# Load EMNIST model
+# Load EMNIST model once
 model = load_model("emnist_model.h5")
 labels = [chr(i) for i in range(65, 91)]  # A-Z
 
@@ -23,7 +33,6 @@ def add_lives_info(state):
     state["max_lives"] = game.max_attempts
     return state
 
-# ✅ Added route for root so it serves index.html
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -55,7 +64,8 @@ def predict():
     padded_img[4:24, 4:24] = img_array
     img_array = padded_img.reshape(1, 28, 28, 1)
 
-    prediction = model.predict(img_array)
+    # Prediction
+    prediction = model.predict(img_array, verbose=0)  # suppress TF messages
     predicted_letter = labels[np.argmax(prediction)]
 
     game_state = add_lives_info(game.get_game_state())
@@ -75,5 +85,5 @@ def reset_game():
     return jsonify({"game_state": game_state})
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # Render sets PORT automatically
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
