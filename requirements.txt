@@ -1,6 +1,6 @@
-fastapi
-uvicorn
+Flask==2.3.2
+Flask-Cors
 tensorflow
-pillow
+Pillow
 numpy
-gradio
+gunicorn
