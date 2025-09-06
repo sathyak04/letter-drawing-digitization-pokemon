@@ -1,4 +1,4 @@
-# Who’s That Pokémon? 🎮
+## Who’s That Pokémon? 🎮
 
 An AI-powered twist on the classic **Who’s That Pokémon?** game.  
 Players handwrite letters, and a machine learning model predicts them in real-time.  
